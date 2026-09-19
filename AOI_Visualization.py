@@ -34,7 +34,7 @@ fecha_fin = '2026-08-31'
 coleccion_s2 = (ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
                 .filterBounds(roi_incendio.geometry())
                 .filterDate(fecha_inicio, fecha_fin)
-                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10)))
+                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))) #coreccion de nubes del 10%
 
 cantidad_imagenes = coleccion_s2.size().getInfo()
 print(f"🛰️ Se encontraron {cantidad_imagenes} imágenes Sentinel-2 útiles en tu área y fechas.")
