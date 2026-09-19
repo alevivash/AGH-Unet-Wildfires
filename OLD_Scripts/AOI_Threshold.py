@@ -80,8 +80,6 @@ print(f"📥 Imagen exportada localmente como: {ruta_imagen_local}")
 
 with rasterio.open(ruta_imagen_local) as src:
     imagen_dnbr = src.read(1) # Leer la banda dNBR extraída de Google Earth Engine
-    bounds = src.bounds #limites geograficoas
-
 
     # --- LÓGICA DE UMBRAL (THRESHOLDING) ---
     # En el índice dNBR, los valores positivos más altos indican mayor severidad de quemadura.
@@ -91,7 +89,7 @@ with rasterio.open(ruta_imagen_local) as src:
     # severe [0.44, 1]
 
     
-    umbral_dnbr = [-1.0,0.1,0.27,0.44,2.0]
+    umbral_dnbr = [-1.0,0.1,0.27,0.66,2.0]
 
     #color para cada rango
     
@@ -103,22 +101,27 @@ with rasterio.open(ruta_imagen_local) as src:
 
     # 4. Visualización
     fig, ax = plt.subplots(figsize=(10, 8))
-
     
- # USAR ax.imshow: Mapea correctamente los colores y normalización usando la extensión geográfica
-    img_plot = ax.imshow(
+    # Proyectar la imagen aplicando las reglas de color
+    img_plot = ax.show(
         imagen_dnbr, 
+        transform=src.transform, 
         cmap=cmap_discreto, 
         norm=norm_discreto, 
-        extent=[bounds.left, bounds.right, bounds.bottom, bounds.top]
-    )
+        title="Niveles de Severidad del Incendio (Los Gallardos)"
+    )# 3. Crear el mapa de colores discreto (estilo hipsométrico)
+    cmap_discreto = colors.ListedColormap(colores_severidad)
+    norm_discreto = colors.BoundaryNorm(umbral_dnbr, cmap_discreto.N)
+
+    # 4. Visualización
+    fig, ax = plt.subplots(figsize=(10, 8))
     
-    # Añadir barra de colores de referencia (opcional pero muy recomendada)
-    cbar = fig.colorbar(img_plot, ax=ax, ticks=umbral_dnbr, shrink=0.7)
-    cbar.set_label('Rango dNBR / Severidad')
-    cbar.ax.set_yticklabels(['-1.0', 'Sin cambio (0.1)', 'Leve (0.27)', 'Moderado (0.66)', 'Grave (2.0)'])
-
-    ax.set_title("Niveles de Severidad del Incendio (Los Gallardos)", fontsize=14, pad=15)
-    plt.show()
-
-    #cosas que hay que arreglar: ver que son esos puntos del norte
+    # Proyectar la imagen aplicando las reglas de color
+    img_plot = show(
+        imagen_dnbr, 
+        ax=ax, 
+        transform=src.transform, 
+        cmap=cmap_discreto, 
+        norm=norm_discreto, 
+        title="Niveles de Severidad del Incendio (Los Gallardos)"
+    )
