@@ -4,7 +4,6 @@ import geemap
 import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
-import matplotlib.colors as colors
 from rasterio.plot import show
 
 # 1. Autenticación con tu llave JSON
@@ -91,38 +90,30 @@ with rasterio.open(ruta_imagen_local) as src:
     
     umbral_dnbr = [-1.0,0.1,0.27,0.66,2.0]
 
+    umbral_dnbr = 0.1
+
     #color para cada rango
     
-    colores_severidad =  ["#55e019", "#ffff00", "#ff930e", "#d41314"]
     
-   # 3. Crear el mapa de colores discreto (estilo hipsométrico)
-    cmap_discreto = colors.ListedColormap(colores_severidad)
-    norm_discreto = colors.BoundaryNorm(umbral_dnbr, cmap_discreto.N)
+    # Crea una máscara binaria (1 = área quemada, 0 = área no quemada)
+    # astype(np.uint8) convierte los valores booleanos (True/False) en enteros (1/0)
+    mascara_quemada = (imagen_dnbr > umbral_dnbr).astype(np.uint8)
 
-    # 4. Visualización
-    fig, ax = plt.subplots(figsize=(10, 8))
+    # --- VISUALIZACIÓN COMPARATIVA ---
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
     
-    # Proyectar la imagen aplicando las reglas de color
-    img_plot = show(
-        imagen_dnbr, 
-        ax=ax, 
-        transform=src.transform, 
-        cmap=cmap_discreto, 
-        norm=norm_discreto, 
-        title="Niveles de Severidad del Incendio (Los Gallardos)"
-    )# 3. Crear el mapa de colores discreto (estilo hipsométrico)
-    cmap_discreto = colors.ListedColormap(colores_severidad)
-    norm_discreto = colors.BoundaryNorm(umbral_dnbr, cmap_discreto.N)
-
-    # 4. Visualización
-    fig, ax = plt.subplots(figsize=(10, 8))
+    # Mapa 1: El dNBR en su escala continua
+    img_plot = show(imagen_dnbr, ax=ax1, transform=src.transform, cmap='YlOrRd', title="1. Índice dNBR (Continuo)")
+    cbar = plt.colorbar(img_plot.get_images()[0], ax=ax1, fraction=0.046, pad=0.04)
+    cbar.set_label('dNBR')
+    ax1.set_xlabel("Longitud")
+    ax1.set_ylabel("Latitud")
     
-    # Proyectar la imagen aplicando las reglas de color
-    img_plot = show(
-        imagen_dnbr, 
-        ax=ax, 
-        transform=src.transform, 
-        cmap=cmap_discreto, 
-        norm=norm_discreto, 
-        title="Niveles de Severidad del Incendio (Los Gallardos)"
-    )
+    # Mapa 2: La máscara binaria segmentada
+    # Usamos el mapa de color 'Greys' para visualizar el contraste estricto entre blanco y negro
+    show(mascara_quemada, ax=ax2, transform=src.transform, cmap='Greys', title=f"2. Máscara Binaria (Umbral > {umbral_dnbr})")
+    ax2.set_xlabel("Longitud")
+    ax2.set_ylabel("Latitud")
+    
+    plt.tight_layout()
+    plt.show()
