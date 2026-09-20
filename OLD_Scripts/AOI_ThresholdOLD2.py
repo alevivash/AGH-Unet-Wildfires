@@ -6,8 +6,6 @@ import numpy as np
 import rasterio
 import matplotlib.colors as colors
 from rasterio.plot import show
-from rasterio.mask import mask
-import geopandas as gpd
 
 # 1. Autenticación con tu llave JSON
 ruta_credenciales = r"C:\Users\USER\Desktop\Projects\agh-wildfire-9ac1bade4a91.json" 
@@ -31,13 +29,10 @@ print("✅ Área de Interés cargada correctamente desde el GeoJSON.")
 
 # 3. Filtrar imágenes Sentinel-2 (L2A con corrección atmosférica)
 #se toma fechas de referencia y se arma un mosaico con las mejores imagenes
-# esto es debido a que usamos el dNBR, se usa el pre fuego y el post fuego
-
-#PRE-FUEGO
+# ---> UBICACIÓN: Aquí puedes variar las fechas pre y post incendio
 fecha_pre_inicio = '2026-06-01'
 fecha_pre_fin = '2026-07-08' # Antes del incendio
 
-#POST-FUEGO
 fecha_post_inicio = '2026-07-20'
 fecha_post_fin = '2026-08-31' # Después del incendio
 
@@ -81,48 +76,43 @@ print(f"📥 Imagen exportada localmente como: {ruta_imagen_local}")
 
 # 5. Segmentación por Umbral (Thresholding) y Visualización
 
-#CARGAR EL GEOJSON, TAL VEZ ESTO PASARLO ARRIBA
-gdf = gpd.read_file(ruta_json_aoi)
-
-# EXTRACT las geometrías en el formato que requiere rasterio.mask
-geometrias = [geom for geom in gdf.geometry]
-
 
 with rasterio.open(ruta_imagen_local) as src:
-    # 5.2 Aplicar la máscara (Clipping)
-    imagen_enmascarada, transformacion_enmascarada = mask(src, geometrias, crop=True, nodata=np.nan)
-    
-    # Extraemos la primera (y única) banda de la imagen enmascarada
-    imagen_dnbr = imagen_enmascarada[0] 
-    
-    # ---> SOLUCIÓN 1: Enmascarar explícitamente los valores NaN para ocultarlos <---
-    imagen_dnbr = np.ma.masked_invalid(imagen_dnbr)
-    
-    # 5.3 Obtener los nuevos límites geográficos (bounds)
-    height, width = imagen_dnbr.shape
-    new_bounds = rasterio.transform.array_bounds(height, width, transformacion_enmascarada)
+    imagen_dnbr = src.read(1) # Leer la banda dNBR extraída de Google Earth Engine
+    bounds = src.bounds #limites geograficoas
+
 
     # --- LÓGICA DE UMBRAL (THRESHOLDING) ---
-    umbral_dnbr = [-1.0, 0.1, 0.27, 0.44, 2.0]
+    # En el índice dNBR, los valores positivos más altos indican mayor severidad de quemadura.
+    #el nbr se encuentra aprox entre -0.5 a +1.3
+    # low Severity umbral nbr e [0.1,0.22]
+    # moderate [0.22, 0.44]
+    # severe [0.44, 1]
+
+    
+    umbral_dnbr = [-1.0,0.1,0.27,0.44,2.0]
+
+    #color para cada rango
+    
     colores_severidad =  ['#55e019', '#ffff00', '#ff930e', '#d41314']
     
+   # 3. Crear el mapa de colores discreto (estilo hipsométrico)
     cmap_discreto = colors.ListedColormap(colores_severidad)
-    
-    # ---> SOLUCIÓN 2: Forzar que los valores nulos/enmascarados sean 100% transparentes <---
-    cmap_discreto.set_bad(color='white', alpha=0)
-    
     norm_discreto = colors.BoundaryNorm(umbral_dnbr, cmap_discreto.N)
 
-    # --- VISUALIZACIÓN ---
+    # 4. Visualización
     fig, ax = plt.subplots(figsize=(10, 8))
+
     
+ # USAR ax.imshow: Mapea correctamente los colores y normalización usando la extensión geográfica
     img_plot = ax.imshow(
         imagen_dnbr, 
         cmap=cmap_discreto, 
         norm=norm_discreto, 
-        extent=[new_bounds[0], new_bounds[2], new_bounds[1], new_bounds[3]] 
+        extent=[bounds.left, bounds.right, bounds.bottom, bounds.top]
     )
     
+    # Añadir barra de colores de referencia (opcional pero muy recomendada)
     cbar = fig.colorbar(img_plot, ax=ax, ticks=umbral_dnbr, shrink=0.7)
     cbar.set_label('Rango dNBR / Severidad')
     cbar.ax.set_yticklabels(['-1.0', 'Sin cambio (0.1)', 'Leve (0.27)', 'Moderado (0.66)', 'Grave (2.0)'])
@@ -130,4 +120,5 @@ with rasterio.open(ruta_imagen_local) as src:
     ax.set_title("Niveles de Severidad del Incendio (Los Gallardos)", fontsize=14, pad=15)
     plt.show()
 
-    # BUSCAR COMO CLIPP, ENMASCARAR UNA IMAEGEN EN INTERNET
+    #cosas que hay que arreglar: ver que son esos puntos del norte
+    #hacer que el mapa atras se vea transparente.
