@@ -113,5 +113,5 @@ with rasterio.open(ruta_imagen_dnbr) as src_dnbr:
     cbar.set_label('Rango dNBR / Severidad')
     cbar.ax.set_yticklabels(['Leve (0.1)', 'Moderado (0.27)', 'Grave (0.44)', 'Extremo (2.0)'])
 
-ax.set_title("Severidad del Incendio (Los Gallardos) sobre Imagen Satelital", fontsize=14, pad=15)
+ax.set_title("Severidad del Incendio (Los Gallardos)", fontsize=14, pad=15)
 plt.show()
