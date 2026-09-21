@@ -29,10 +29,13 @@ print("✅ Área de Interés cargada correctamente desde el GeoJSON.")
 
 # 3. Filtrar imágenes Sentinel-2 (L2A con corrección atmosférica)
 #se toma fechas de referencia y se arma un mosaico con las mejores imagenes
-# ---> UBICACIÓN: Aquí puedes variar las fechas pre y post incendio
+# esto es debido a que usamos el dNBR, se usa el pre fuego y el post fuego
+
+#PRE-FUEGO
 fecha_pre_inicio = '2026-06-01'
 fecha_pre_fin = '2026-07-08' # Antes del incendio
 
+#POST-FUEGO
 fecha_post_inicio = '2026-07-20'
 fecha_post_fin = '2026-08-31' # Después del incendio
 
@@ -78,18 +81,20 @@ print(f"📥 Imagen exportada localmente como: {ruta_imagen_local}")
 
 
 with rasterio.open(ruta_imagen_local) as src:
+
+    #LEE LA PRIMERA
     imagen_dnbr = src.read(1) # Leer la banda dNBR extraída de Google Earth Engine
     bounds = src.bounds #limites geograficoas
 
 
-    # --- LÓGICA DE UMBRAL (THRESHOLDING) ---
+    # LÓGICA DE UMBRAL (THRESHOLDING) 
     # En el índice dNBR, los valores positivos más altos indican mayor severidad de quemadura.
     #el nbr se encuentra aprox entre -0.5 a +1.3
     # low Severity umbral nbr e [0.1,0.22]
     # moderate [0.22, 0.44]
     # severe [0.44, 1]
 
-    
+    #LIMITS
     umbral_dnbr = [-1.0,0.1,0.27,0.44,2.0]
 
     #color para cada rango

@@ -88,7 +88,7 @@ with rasterio.open(ruta_imagen_local) as src:
     # severe [0.44, 1]
 
     
-    umbral_dnbr = [-1.0,0.1,0.27,0.66,2.0]
+    #umbral_dnbr = [-1.0,0.1,0.27,0.66,2.0]
 
     umbral_dnbr = 0.1
 

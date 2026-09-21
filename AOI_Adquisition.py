@@ -28,6 +28,7 @@ roi_incendio = ee.FeatureCollection(features_ee)
 print("✅ Área de Interés cargada correctamente desde el GeoJSON.")
 
 # 3. Filtrar imágenes Sentinel-2 (L2A con corrección atmosférica)
+#se toma fechas de referencia y se arma un mosaico con las mejores imagenes
 # ---> UBICACIÓN: Aquí puedes variar las fechas pre y post incendio
 fecha_pre_inicio = '2026-06-01'
 fecha_pre_fin = '2026-07-08' # Antes del incendio
