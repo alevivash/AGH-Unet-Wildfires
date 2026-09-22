@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 
 # Importamos la arquitectura U-Net desde tu script anterior
 # (Asegúrate de guardar el código de U-Net en un archivo llamado 'unet_model.py')
-from unet_model import UNet
+from OLD_Scripts.unet_model import UNet
 
 class WildfireDataset(Dataset):
     """
