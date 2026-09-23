@@ -1,5 +1,7 @@
 # Importacion y segmetancion
 
+#IMPORTAR LIBRERIAS
+
 import json
 import ee
 import geemap
