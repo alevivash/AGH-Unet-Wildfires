@@ -127,5 +127,5 @@ with rasterio.open(ruta_imagen_dnbr) as src_dnbr:
     'High (0.66)',
     'Extreme (2.0)'
     ])
-ax.set_title("Severidad del Incendio (Los Gallardos)", fontsize=14, pad=15)
+ax.set_title("Wildfire Severity (Los Gallardos)", fontsize=14, pad=15)
 plt.show()
