@@ -97,8 +97,13 @@ with rasterio.open(ruta_imagen_dnbr) as src_dnbr:
     new_bounds = rasterio.transform.array_bounds(height, width, transformacion_enmascarada)
 
     # Actualizamos los colores para que solo contengan las clases afectadas
-    umbral_dnbr = [0.1, 0.27, 0.44, 2.0]
-    colores_severidad =  ['#ffff00', '#ff930e', '#d41314'] # Amarillo, Naranja, Rojo
+    umbral_dnbr = [0.1, 0.27, 0.44, 0.66, 2.0]
+    colores_severidad = ['#ffff00', '#ff930e', '#d41314', '#7a0010'] # Amarillo, Naranja, Rojo, Rojo Oscuro
+
+    # > 0.1 LOW SEVERITY [0.1 a 0.27)
+    # [0.27, 0.44) MODERATE - LOW SEVERITY
+    # [0.44, 0.66) MODERATE - HIGH SEVERITY
+    # [0.66, 2.0] HIGH SEVERITY
     
     cmap_discreto = colors.ListedColormap(colores_severidad)
     cmap_discreto.set_bad(color='white', alpha=0)
@@ -114,8 +119,13 @@ with rasterio.open(ruta_imagen_dnbr) as src_dnbr:
     )
     
     cbar = fig.colorbar(img_plot, ax=ax, ticks=umbral_dnbr, shrink=0.7)
-    cbar.set_label('Rango dNBR / Severidad')
-    cbar.ax.set_yticklabels(['Leve (0.1)', 'Moderado (0.27)', 'Grave (0.44)', 'Extremo (2.0)'])
-
+    cbar.set_label('Rangue dNBR / Severity')
+    cbar.ax.set_yticklabels([
+    'Low (0.1)', 
+    'Moderate-low severity (0.27)', 
+    'Moderate-high (0.44)', 
+    'High (0.66)',
+    'Extreme (2.0)'
+    ])
 ax.set_title("Severidad del Incendio (Los Gallardos)", fontsize=14, pad=15)
 plt.show()
