@@ -98,7 +98,7 @@ with rasterio.open(ruta_imagen_dnbr) as src_dnbr:
 
     # Actualizamos los colores para que solo contengan las clases afectadas
     umbral_dnbr = [0.1, 0.27, 0.44, 0.66, 2.0]
-    colores_severidad = ['#ffff00', '#ff930e', '#d41314', '#7a0010'] # Amarillo, Naranja, Rojo, Rojo Oscuro
+    colores_severidad = ['#ffff00', '#ff930e', '#d41314', '#0906cc'] # Amarillo, Naranja, Rojo, Rojo Oscuro
 
     # > 0.1 LOW SEVERITY [0.1 a 0.27)
     # [0.27, 0.44) MODERATE - LOW SEVERITY
