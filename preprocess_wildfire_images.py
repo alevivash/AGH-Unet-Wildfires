@@ -1,4 +1,26 @@
-# Importacion y segmetancion
+"""
+MODULE: Wildfire Dataset Preparation & Preprocessing for U-Net
+==============================================================================
+DESCRIPTION:
+    This script acts as the data ingestion and preprocessing pipeline for a 
+    U-Net deep learning model. It authenticates via Google Earth Engine (GEE)
+    to query, filter, and process Sentinel-2 imagery for wildfire analysis.
+    
+    It computes the dNBR (burn severity) and extracts True Color (RGB) bands,
+    exporting them as standardized local GeoTIFFs. These raw exported images 
+    serve as the baseline data to be subsequently tiled into patches for 
+    neural network training. A multi-layer visualization (basemap and dnbr)  is included for 
+    quality control before patching.
+
+AOI: Los Gallardos, Spain.
+PROJECT:      agh-wildfire (U-Net Training Pipeline)
+AUTHOR:       ALEJANDRO VIVAS
+LAST VERSION DATE:         October 14, 2026
+
+DEPENDENCIES:
+    ee, geemap, rasterio, geopandas, matplotlib, numpy
+==============================================================================
+"""
 
 #IMPORTAR LIBRERIAS
 

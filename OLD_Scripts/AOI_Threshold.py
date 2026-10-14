@@ -6,6 +6,8 @@ import numpy as np
 import rasterio
 import matplotlib.colors as colors
 from rasterio.plot import show
+from rasterio.mask import mask
+import geopandas as gpd
 
 # 1. Autenticación con tu llave JSON
 ruta_credenciales = r"C:\Users\USER\Desktop\Projects\agh-wildfire-9ac1bade4a91.json" 
@@ -17,7 +19,6 @@ ee.Initialize(credentials=gee_credentials, project='agh-wildfire')
 print("✅ Conexión a Earth Engine exitosa.")
 
 # 2. Cargar el área de interés (AOI) usando el archivo GeoJSON correcto
-# ---> UBICACIÓN: Aquí debes verificar la ruta de tu archivo GeoJSON
 ruta_json_aoi = r"C:\Users\USER\Desktop\Projects\EMSR892-aois.geojson"
 
 with open(ruta_json_aoi, 'r', encoding='utf-8') as f:
@@ -30,10 +31,13 @@ print("✅ Área de Interés cargada correctamente desde el GeoJSON.")
 
 # 3. Filtrar imágenes Sentinel-2 (L2A con corrección atmosférica)
 #se toma fechas de referencia y se arma un mosaico con las mejores imagenes
-# ---> UBICACIÓN: Aquí puedes variar las fechas pre y post incendio
+# esto es debido a que usamos el dNBR, se usa el pre fuego y el post fuego
+
+#PRE-FUEGO
 fecha_pre_inicio = '2026-06-01'
 fecha_pre_fin = '2026-07-08' # Antes del incendio
 
+#POST-FUEGO
 fecha_post_inicio = '2026-07-20'
 fecha_post_fin = '2026-08-31' # Después del incendio
 
@@ -77,51 +81,53 @@ print(f"📥 Imagen exportada localmente como: {ruta_imagen_local}")
 
 # 5. Segmentación por Umbral (Thresholding) y Visualización
 
+#CARGAR EL GEOJSON, TAL VEZ ESTO PASARLO ARRIBA
+gdf = gpd.read_file(ruta_json_aoi)
+
+# EXTRACT las geometrías en el formato que requiere rasterio.mask
+geometrias = [geom for geom in gdf.geometry]
+
 
 with rasterio.open(ruta_imagen_local) as src:
-    imagen_dnbr = src.read(1) # Leer la banda dNBR extraída de Google Earth Engine
+    # 5.2 Aplicar la máscara (Clipping)
+    imagen_enmascarada, transformacion_enmascarada = mask(src, geometrias, crop=True, nodata=np.nan)
+    
+    # Extraemos la primera (y única) banda de la imagen enmascarada
+    imagen_dnbr = imagen_enmascarada[0] 
+    
+    # ---> SOLUCIÓN 1: Enmascarar explícitamente los valores NaN para ocultarlos <---
+    imagen_dnbr = np.ma.masked_invalid(imagen_dnbr)
+    
+    # 5.3 Obtener los nuevos límites geográficos (bounds)
+    height, width = imagen_dnbr.shape
+    new_bounds = rasterio.transform.array_bounds(height, width, transformacion_enmascarada)
 
     # --- LÓGICA DE UMBRAL (THRESHOLDING) ---
-    # En el índice dNBR, los valores positivos más altos indican mayor severidad de quemadura.
-    #el nbr se encuentra aprox entre -0.5 a +1.3
-    # low Severity umbral nbr e [0.1,0.22]
-    # moderate [0.22, 0.44]
-    # severe [0.44, 1]
-
-    
-    umbral_dnbr = [-1.0,0.1,0.27,0.66,2.0]
-
-    #color para cada rango
-    
+    umbral_dnbr = [-1.0, 0.1, 0.27, 0.44, 2.0]
     colores_severidad =  ['#55e019', '#ffff00', '#ff930e', '#d41314']
     
-   # 3. Crear el mapa de colores discreto (estilo hipsométrico)
     cmap_discreto = colors.ListedColormap(colores_severidad)
+    
+    # ---> SOLUCIÓN 2: Forzar que los valores nulos/enmascarados sean 100% transparentes <---
+    cmap_discreto.set_bad(color='white', alpha=0)
+    
     norm_discreto = colors.BoundaryNorm(umbral_dnbr, cmap_discreto.N)
 
-    # 4. Visualización
+    # --- VISUALIZACIÓN ---
     fig, ax = plt.subplots(figsize=(10, 8))
     
-    # Proyectar la imagen aplicando las reglas de color
-    img_plot = ax.show(
+    img_plot = ax.imshow(
         imagen_dnbr, 
-        transform=src.transform, 
         cmap=cmap_discreto, 
         norm=norm_discreto, 
-        title="Niveles de Severidad del Incendio (Los Gallardos)"
-    )# 3. Crear el mapa de colores discreto (estilo hipsométrico)
-    cmap_discreto = colors.ListedColormap(colores_severidad)
-    norm_discreto = colors.BoundaryNorm(umbral_dnbr, cmap_discreto.N)
-
-    # 4. Visualización
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # Proyectar la imagen aplicando las reglas de color
-    img_plot = show(
-        imagen_dnbr, 
-        ax=ax, 
-        transform=src.transform, 
-        cmap=cmap_discreto, 
-        norm=norm_discreto, 
-        title="Niveles de Severidad del Incendio (Los Gallardos)"
+        extent=[new_bounds[0], new_bounds[2], new_bounds[1], new_bounds[3]] 
     )
+    
+    cbar = fig.colorbar(img_plot, ax=ax, ticks=umbral_dnbr, shrink=0.7)
+    cbar.set_label('Rango dNBR / Severidad')
+    cbar.ax.set_yticklabels(['-1.0', 'Sin cambio (0.1)', 'Leve (0.27)', 'Moderado (0.66)', 'Grave (2.0)'])
+
+    ax.set_title("Niveles de Severidad del Incendio (Los Gallardos)", fontsize=14, pad=15)
+    plt.show()
+
+    # BUSCAR COMO CLIPP, ENMASCARAR UNA IMAEGEN EN INTERNET
