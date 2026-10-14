@@ -120,12 +120,14 @@ with rasterio.open(ruta_imagen_dnbr) as src_dnbr:
 
     # Actualizamos los colores para que solo contengan las clases afectadas
     umbral_dnbr = [0.1, 0.27, 0.44, 0.66, 2.0]
-    colores_severidad = ['#ffff00', '#ff930e', '#d41314', '#0906cc'] # Amarillo, Naranja, Rojo, Rojo Oscuro
+    colores_severidad = ['#f3c6f1', '#e066ff', '#b900b9', '#ba0437'] # Pinkish-Lila, Orchid Purple, Dark Magenta, Deep Crimson Red
 
-    # > 0.1 LOW SEVERITY [0.1 a 0.27)
-    # [0.27, 0.44) MODERATE - LOW SEVERITY
-    # [0.44, 0.66) MODERATE - HIGH SEVERITY
-    # [0.66, 2.0] HIGH SEVERITY
+    # Threshold values (dNBR Ranges):
+    # > 0.1 LOW SEVERITY [0.1 to 0.27)          -> #f3c6f1 (Soft pinkish-lila)
+    # [0.27, 0.44) MODERATE - LOW SEVERITY     -> #e066ff (Vibrant orchid purple)
+    # [0.44, 0.66) MODERATE - HIGH SEVERITY    -> #b900b9 (Dark magenta / intense violet)
+    # [0.66, 2.0] HIGH SEVERITY                -> #ba0437 (Deep crimson red for extreme burn)
+
     
     cmap_discreto = colors.ListedColormap(colores_severidad)
     cmap_discreto.set_bad(color='white', alpha=0)
